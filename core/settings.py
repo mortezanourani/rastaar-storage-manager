@@ -30,6 +30,8 @@ INSTALLED_APPS = [
     # Third party
     'corsheaders',
     'ninja',
+    'rest_framework',
+    'rest_framework_simplejwt',
     # Local apps
     'users',
     'projects',
