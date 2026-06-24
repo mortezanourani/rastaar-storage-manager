@@ -9,14 +9,13 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-from logging import DEBUG
 from pathlib import Path
-
-from django.conf.global_settings import DATA_UPLOAD_MAX_MEMORY_SIZE
 from dotenv import load_dotenv
 import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env')
+
 SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
@@ -73,11 +72,11 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'storagemanager_db',
-        'USER': 'storagemanager_user',
-        'PASSWORD': os.getenv('DATABASE_URL', '').split(':')[-1].split('@')[0] if '@' in os.getenv('DATABASE_URL') else '$N0uR@ni',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
     }
 }
 
@@ -102,7 +101,7 @@ CORS_ALLOW_CREDENTIALS = True
 
 # Storage
 STORAGE_ROOT = os.getenv('STORAGE_ROOT', '/tmp/storagemanager_files')
-THUMBNAIL_DIR = os.path.join(STORAGE_ROOT, 'thumbs')
+THUMBNAIL_DIR = os.path.join(STORAGE_ROOT, '.thumbs')
 
 # Static files
 STATIC_URL = 'static/'
