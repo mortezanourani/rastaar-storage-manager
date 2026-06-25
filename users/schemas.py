@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class LoginInput(Schema):
-    email: str
+    username: str
     password: str
 
 

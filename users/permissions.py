@@ -60,7 +60,11 @@ def check_directory_access(user, project_id, directory_type):
     return True
 
 
-def check_can_delete(user, project_id):
+def check_can_delete(user, project_id, directory_type=None):
     """Only Managers and Administrators can delete files."""
-    if not user.is_global_manager:
-        raise HttpError(403, "Only Managers and Administrators can delete files")
+    if user.is_global_manager:
+        return True
+    if directory_type == "shared":
+        check_project_member(user, project_id)
+        return True
+    raise HttpError(403, "Only Managers and Administrators can delete files")

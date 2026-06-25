@@ -192,7 +192,6 @@ def get_thumbnail(request, project_id: int, file_id: int):
 @router.delete("/projects/{project_id}/files/{file_id}", response=MessageResponse)
 def delete_file(request, project_id: int, file_id: int):
     project = get_accessible_project(request.auth, project_id)
-    check_can_delete(request.auth, project_id)
 
     try:
         file_record = FileRecord.objects.get(
@@ -200,6 +199,8 @@ def delete_file(request, project_id: int, file_id: int):
         )
     except FileRecord.DoesNotExist:
         raise HttpError(404, "File not found")
+
+    check_can_delete(request.auth, project_id, file_record.directory_type)
 
     soft_delete_file(file_record)
     return {"message": f"'{file_record.display_name}' moved to trash"}

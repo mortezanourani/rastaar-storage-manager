@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Form, Input, Button, Card, Typography, Alert } from 'antd'
-import { MailOutlined, LockOutlined, FolderOutlined } from '@ant-design/icons'
+import { UserOutlined, LockOutlined, FolderOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
@@ -12,14 +12,14 @@ export default function LoginPage() {
   const [error,   setError]   = useState('')
   const [loading, setLoading] = useState(false)
 
-  const onFinish = async ({ email, password }) => {
+  const onFinish = async ({ username, password }) => {
     setLoading(true)
     setError('')
     try {
-      await login(email, password)
+      await login(username, password)
       navigate('/', { replace: true })
     } catch (err) {
-      setError(err.response?.data?.detail || 'Invalid email or password')
+      setError(err.response?.data?.detail || 'Invalid username or password')
     } finally {
       setLoading(false)
     }
@@ -35,7 +35,6 @@ export default function LoginPage() {
         style={{ width: 400, borderRadius: 12, boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}
         styles={{ body: { padding: 40 } }}
       >
-        {/* Logo block */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -53,18 +52,16 @@ export default function LoginPage() {
 
         <Form layout="vertical" onFinish={onFinish} requiredMark={false}>
           <Form.Item
-            name="email"
-            label="Email"
-            rules={[
-              { required: true, message: 'Email is required' },
-              { type: 'email', message: 'Enter a valid email address' },
-            ]}
+            name="username"
+            label="Username"
+            rules={[{ required: true, message: 'Username is required' }]}
           >
             <Input
-              prefix={<MailOutlined style={{ color: '#bbb' }} />}
-              placeholder="you@company.com"
+              prefix={<UserOutlined style={{ color: '#bbb' }} />}
+              placeholder="your_username"
               size="large"
-              autoComplete="email"
+              autoComplete="username"
+              autoFocus
             />
           </Form.Item>
 

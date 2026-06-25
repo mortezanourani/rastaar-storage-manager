@@ -18,7 +18,12 @@ User = get_user_model()
 
 @router.post("/auth/login", response=TokenResponse, auth=None)
 def login(request, data: LoginInput):
-    user = authenticate(request, username=data.email, password=data.password)
+    try:
+        user_obj = User.objects.get(username=data.username)
+        user = authenticate(request, username=user_obj.email, password=data.password)
+    except User.DoesNotExist:
+        user = None
+
     if not user:
         raise HttpError(401, "Invalid email or password")
     if not user.is_active:
