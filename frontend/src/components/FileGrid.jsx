@@ -3,29 +3,36 @@ import {
   Row, Col, Card, Typography, Tooltip,
   Button, Spin, Empty, Popconfirm, message,
 } from 'antd'
-import { DownloadOutlined, DeleteOutlined, UserOutlined } from '@ant-design/icons'
+import {
+  DownloadOutlined, DeleteOutlined, EyeOutlined,
+} from '@ant-design/icons'
 import { listFiles, downloadFile, deleteFile } from '../api/files'
 import { useAuth } from '../context/AuthContext'
-import AuthImage from './AuthImage'
-import FileIcon  from './FileIcon'
+import AuthImage       from './AuthImage'
+import FileIcon        from './FileIcon'
+import FileViewerModal, { isViewable } from './FileViewerModal'  // ← new
 
 const { Text } = Typography
 
-function fmt_size(bytes) {
+function fmtSize(bytes) {
   if (!bytes) return '0 B'
   const u = ['B', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(1024))
   return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${u[i]}`
 }
 
-function fmt_date(str) {
+function fmtDate(str) {
   return new Date(str).toLocaleDateString(undefined, {
     year: 'numeric', month: 'short', day: 'numeric',
   })
 }
 
-function FileCard({ file, projectId, canDelete, onDeleted }) {
+// ─── FileCard ────────────────────────────────────────────────
+
+function FileCard({ file, projectId, canDelete, onDeleted, onView }) {
   const [hovered, setHovered] = useState(false)
+
+  const viewable = isViewable(file.mime_type)  // ← check once
 
   const handleDownload = async () => {
     try {
@@ -54,12 +61,17 @@ function FileCard({ file, projectId, canDelete, onDeleted }) {
       styles={{ body: { padding: 0 } }}
       cover={
         <div style={{ position: 'relative' }}>
-          {/* Preview area */}
-          <div style={{
-            height: 120, background: '#f5f6fa',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            overflow: 'hidden',
-          }}>
+          {/* Preview area — clicking opens viewer for viewable files */}
+          <div
+            onClick={() => viewable && onView && onView(file.id)}
+            style={{
+              height: 120,
+              background: '#f5f6fa',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              overflow: 'hidden',
+              cursor: viewable ? 'pointer' : 'default',
+            }}
+          >
             {file.has_thumbnail ? (
               <AuthImage
                 projectId={projectId}
@@ -73,7 +85,7 @@ function FileCard({ file, projectId, canDelete, onDeleted }) {
             )}
           </div>
 
-          {/* Hover overlay with actions */}
+          {/* Hover overlay */}
           <div
             className="file-overlay"
             style={{
@@ -86,14 +98,28 @@ function FileCard({ file, projectId, canDelete, onDeleted }) {
               pointerEvents: hovered ? 'auto' : 'none',
             }}
           >
+            {/* View — only for images, videos, audio */}
+            {viewable && onView && (
+              <Tooltip title="View">
+                <Button
+                  type="primary" shape="circle"
+                  icon={<EyeOutlined />} size="small"
+                  onClick={(e) => { e.stopPropagation(); onView(file.id) }}
+                />
+              </Tooltip>
+            )}
+
+            {/* Download — always */}
             <Tooltip title="Download">
               <Button
-                type="primary" shape="circle"
+                shape="circle"
                 icon={<DownloadOutlined />} size="small"
                 onClick={(e) => { e.stopPropagation(); handleDownload() }}
+                style={{ background: '#fff' }}
               />
             </Tooltip>
 
+            {/* Delete — conditional */}
             {canDelete && (
               <Popconfirm
                 title="Move to trash?"
@@ -116,46 +142,45 @@ function FileCard({ file, projectId, canDelete, onDeleted }) {
         </div>
       }
     >
-      {/* File metadata */}
+      {/* Metadata */}
       <div style={{ padding: '10px 10px 8px' }}>
         <Tooltip title={file.display_name}>
-          <Text
-            strong
-            style={{ fontSize: 12, display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <Text strong style={{
+            fontSize: 12, display: 'block',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
             {file.display_name}
           </Text>
         </Tooltip>
-
         <Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 2 }}>
-          {fmt_size(file.file_size)}
+          {fmtSize(file.file_size)}
         </Text>
-
-        <Tooltip title={file.uploaded_by_name || file.uploaded_by_email || 'Unknown'}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 4 }}>
-            <UserOutlined style={{ fontSize: 10, color: '#bbb' }} />
-            <Text
-              type="secondary"
-              style={{ fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-            >
-              {file.uploaded_by_name || file.uploaded_by_email || '—'}
-            </Text>
-          </div>
-        </Tooltip>
-
+        <Text type="secondary" style={{
+          fontSize: 11, display: 'block', marginTop: 2,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>
+          {file.uploaded_by_name || file.uploaded_by_email || '—'}
+        </Text>
         <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 2 }}>
-          {fmt_date(file.uploaded_at)}
+          {fmtDate(file.uploaded_at)}
         </Text>
       </div>
     </Card>
   )
 }
 
+// ─── FileGrid ────────────────────────────────────────────────
+
 export default function FileGrid({ projectId, directoryType, dateDirectory }) {
-  const { user }  = useAuth()
-  const [files,   setFiles]   = useState([])
-  const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
+  const [files,       setFiles]       = useState([])
+  const [loading,     setLoading]     = useState(true)
+  const [viewerState, setViewerState] = useState({ open: false, index: 0 })
 
   const canDelete = user?.is_administrator || user?.is_manager || directoryType === 'shared'
+
+  // Only viewable files go to the viewer — for navigation
+  const viewableFiles = files.filter(f => isViewable(f.mime_type))
 
   useEffect(() => {
     if (directoryType) fetchFiles()
@@ -174,7 +199,13 @@ export default function FileGrid({ projectId, directoryType, dateDirectory }) {
   }
 
   const handleDeleted = (fileId) =>
-    setFiles((prev) => prev.filter((f) => f.id !== fileId))
+    setFiles(prev => prev.filter(f => f.id !== fileId))
+
+  const handleView = (fileId) => {
+    // Find the file's index within viewableFiles only
+    const idx = viewableFiles.findIndex(f => f.id === fileId)
+    if (idx >= 0) setViewerState({ open: true, index: idx })
+  }
 
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
@@ -183,24 +214,33 @@ export default function FileGrid({ projectId, directoryType, dateDirectory }) {
   )
 
   if (files.length === 0) return (
-    <Empty
-      description="No files here yet"
-      style={{ marginTop: 60 }}
-    />
+    <Empty description="No files here yet" style={{ marginTop: 60 }} />
   )
 
   return (
-    <Row gutter={[12, 12]}>
-      {files.map((file) => (
-        <Col xs={12} sm={8} md={6} lg={4} key={file.id}>
-          <FileCard
-            file={file}
-            projectId={projectId}
-            canDelete={canDelete}
-            onDeleted={handleDeleted}
-          />
-        </Col>
-      ))}
-    </Row>
+    <>
+      <Row gutter={[12, 12]}>
+        {files.map(file => (
+          <Col xs={12} sm={8} md={6} lg={4} key={file.id}>
+            <FileCard
+              file={file}
+              projectId={projectId}
+              canDelete={canDelete}
+              onDeleted={handleDeleted}
+              onView={isViewable(file.mime_type) ? handleView : undefined}
+            />
+          </Col>
+        ))}
+      </Row>
+
+      {/* Viewer — only mounts when open */}
+      <FileViewerModal
+        files={viewableFiles}
+        initialIndex={viewerState.index}
+        projectId={projectId}
+        open={viewerState.open}
+        onClose={() => setViewerState(s => ({ ...s, open: false }))}
+      />
+    </>
   )
 }

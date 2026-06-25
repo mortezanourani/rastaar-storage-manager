@@ -32,6 +32,17 @@ export const downloadFile = async (pid, fileId, filename) => {
   URL.revokeObjectURL(url)
 }
 
+// Fetches file as blob for in-app viewing (no browser download triggered)
+export const fetchFileBlob = (pid, fileId, onProgress) =>
+  client.get(`projects/${pid}/files/${fileId}/download`, {
+    responseType: 'blob',
+    onDownloadProgress: (e) => {
+      if (onProgress && e.total) {
+        onProgress(Math.round((e.loaded * 100) / e.total))
+      }
+    },
+  })
+
 // Returns blob for authenticated image display
 export const fetchThumbnail = (pid, fileId) =>
   client.get(`projects/${pid}/files/${fileId}/thumbnail`, { responseType: 'blob' })
