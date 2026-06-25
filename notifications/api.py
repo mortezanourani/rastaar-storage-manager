@@ -11,7 +11,7 @@ def list_notifications(request):
     notifications = Notification.objects.filter(
         user=request.auth
     ).select_related(
-        "mentionfileproject",
+        "mention",
         "mention__mentioned_by",
     ).order_by("-created_at")[:50]
 
