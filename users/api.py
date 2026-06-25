@@ -66,7 +66,7 @@ def get_me(request):
 
 @router.get("/users", response=list[UserOut])
 def list_users(request):
-    if not request.auth.is_administrator:
+    if not request.auth.is_administrator and not request.auth.is_manager:
         raise HttpError(403, "Administrator access required")
     return User.objects.all().order_by("created_at")
 
