@@ -155,7 +155,7 @@ export default function FileGrid({ projectId, directoryType, dateDirectory }) {
   const [files,   setFiles]   = useState([])
   const [loading, setLoading] = useState(true)
 
-  const canDelete = user?.is_administrator || user?.is_manager
+  const canDelete = user?.is_administrator || user?.is_manager || directoryType === 'shared'
 
   useEffect(() => {
     if (directoryType) fetchFiles()

@@ -7,6 +7,7 @@ import {
   FolderOutlined, FolderOpenOutlined,
   EditOutlined, AppstoreOutlined, ShareAltOutlined,
   UploadOutlined, TeamOutlined, ReloadOutlined,
+  CalendarOutlined,
 } from '@ant-design/icons'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getProject } from '../api/projects'
@@ -74,29 +75,45 @@ export default function FileBrowserPage() {
       : selection.type.charAt(0).toUpperCase() + selection.type.slice(1)
     : null
 
+  const today = new Date().toISOString().split('T')[0]
+
   const buildMenu = () => {
     if (!structure) return []
     const items = []
 
-    structure.date_directories.forEach((d) =>
-      items.push({ key: `date:${d}`, icon: <FolderOutlined />, label: d })
-    )
+    items.push({
+      key: `date:${today}`,
+      icon: <CalendarOutlined style={{ color: '#1677ff' }} />,
+      label: <span style={{ color: '#1677ff', fontWeight: 500 }}>Today - {today}</span>,
+    })
 
-    if (structure.date_directories.length > 0 &&
-      (structure.has_edit || structure.has_assets || structure.has_shared)) {
+    structure.date_directories
+      .filter(d => d !== today)
+      .forEach((d) =>
+        items.push({ key: `date:${d}`, icon: <FolderOutlined />, label: d })
+      )
+
+    if ((structure.has_edit || structure.has_assets || structure.has_shared)) {
       items.push({ type: 'divider' })
     }
 
     if (structure.has_edit) {
+      const editChildren = [
+        {
+          key: `edit:${today}`,
+          icon: <CalendarOutlined style={{ color: '#1677ff' }} />,
+          label: <span style={{ color: '#1677ff', fontWeight: 500 }}>Today - {today}</span>,
+        },
+        ...structure.edit_date_directories
+          .filter(d => d !== today)
+          .map((d) => ({ key: `edit:${id}`, icon: <FolderOutlined />, label: d }))
+      ]
+
       items.push({
         key: 'edit-sub',
         icon: <EditOutlined />,
         label: 'Edit',
-        children: structure.edit_date_directories.length > 0
-          ? structure.edit_date_directories.map((d) => ({
-              key: `edit:${d}`, icon: <FolderOutlined />, label: d,
-            }))
-          : [{ key: 'edit-empty', label: 'No dates yet', disabled: true }],
+        children: editChildren,
       })
     }
 
