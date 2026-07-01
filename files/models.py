@@ -20,6 +20,7 @@ class FileRecord(models.Model):
     stored_name = models.CharField(max_length=500)
     relative_path = models.CharField(max_length=1000)
     directory_type = models.CharField(max_length=20, choices=DirectoryType.choices)
+    subdirectory = models.CharField(max_length=500, blank=True, default='')
     date_directory = models.DateField(null=True, blank=True)
     file_size = models.BigIntegerField()
     mime_type = models.CharField(max_length=255)
@@ -37,4 +38,27 @@ class FileRecord(models.Model):
         db_table = 'file_records'
 
     def __str__(self):
+        return self.display_name
+
+class GlobalFileRecord(models.Model):
+    display_name  = models.CharField(max_length=500)
+    stored_name   = models.CharField(max_length=500)
+    relative_path = models.CharField(max_length=1000)
+    subdirectory  = models.CharField(max_length=500, blank=True, default='')
+    file_size     = models.BigIntegerField()
+    mime_type     = models.CharField(max_length=255)
+    uploaded_by   = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='global_files',
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    is_deleted  = models.BooleanField(default=False)
+    deleted_at  = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'global_file_records'
+
+    def str(self):
         return self.display_name

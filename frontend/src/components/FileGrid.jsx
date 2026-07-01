@@ -171,7 +171,7 @@ function FileCard({ file, projectId, canDelete, onDeleted, onView }) {
 
 // ─── FileGrid ────────────────────────────────────────────────
 
-export default function FileGrid({ projectId, directoryType, dateDirectory }) {
+export default function FileGrid({ projectId, directoryType, dateDirectory, subdirectory = '' }) {
   const { user } = useAuth()
   const [files,       setFiles]       = useState([])
   const [loading,     setLoading]     = useState(true)
@@ -184,12 +184,12 @@ export default function FileGrid({ projectId, directoryType, dateDirectory }) {
 
   useEffect(() => {
     if (directoryType) fetchFiles()
-  }, [projectId, directoryType, dateDirectory])
+  }, [projectId, directoryType, dateDirectory, subdirectory])
 
   const fetchFiles = async () => {
     setLoading(true)
     try {
-      const res = await listFiles(projectId, directoryType, dateDirectory)
+      const res = await listFiles(projectId, directoryType, dateDirectory, subdirectory)
       setFiles(res.data)
     } catch {
       message.error('Failed to load files')

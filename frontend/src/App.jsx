@@ -5,6 +5,7 @@ import FileBrowserPage from './pages/FileBrowserPage'
 import AdminPage      from './pages/AdminPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import AppLayout      from './components/AppLayout'
+import GlobalStoragePage from './pages/GlobalStoragePage'
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/"                     element={<ProjectsPage />} />
+          <Route path="/global"               element={<GlobalStoragePage />} />
           <Route path="/projects/:projectId"  element={<FileBrowserPage />} />
           <Route path="/admin"                element={<AdminPage />} />
         </Route>

@@ -2,15 +2,19 @@ import { useState, useEffect } from 'react'
 import { Spin } from 'antd'
 import { fetchThumbnail } from '../api/files'
 
-export default function AuthImage({ projectId, fileId, alt, style, fallback = null }) {
+export default function AuthImage({ projectId, fileId, alt, style, fallback = null, fetchFn }) {
   const [src,     setSrc]     = useState(null)
   const [loading, setLoading] = useState(true)
   const [failed,  setFailed]  = useState(false)
 
   useEffect(() => {
     let objectUrl = null
+    // Use custom fetch if provided, otherwise default to project thumbnail
+    const doFetch = fetchFn
+      ? () => fetchFn(fileId)
+      : () => fetchThumbnail(projectId, fileId)
 
-    fetchThumbnail(projectId, fileId)
+    doFetch()
       .then((res) => {
         objectUrl = URL.createObjectURL(res.data)
         setSrc(objectUrl)
@@ -18,7 +22,6 @@ export default function AuthImage({ projectId, fileId, alt, style, fallback = nu
       .catch(() => setFailed(true))
       .finally(() => setLoading(false))
 
-    // Clean up blob URL when component unmounts
     return () => { if (objectUrl) URL.revokeObjectURL(objectUrl) }
   }, [projectId, fileId])
 
@@ -27,8 +30,6 @@ export default function AuthImage({ projectId, fileId, alt, style, fallback = nu
       <Spin size="small" />
     </div>
   )
-
   if (failed) return fallback
-
   return <img src={src} alt={alt} style={style} />
 }

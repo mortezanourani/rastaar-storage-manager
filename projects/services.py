@@ -41,7 +41,7 @@ def ensure_date_directory(project, directory_type: str, date_str: str) -> str:
     return path
 
 
-def get_directory_path(project, directory_type: str, date_str: str = None) -> str:
+def get_directory_path(project, directory_type: str, date_str: str = None, subdirectory: str = '') -> str:
     """Returns the full filesystem path for a given directory type."""
     base = project.get_full_path()
 
@@ -51,9 +51,11 @@ def get_directory_path(project, directory_type: str, date_str: str = None) -> st
         edit_base = os.path.join(base, "Edit")
         return os.path.join(edit_base, date_str) if date_str else edit_base
     elif directory_type == "assets":
-        return os.path.join(base, "Assets")
+        assets_base = os.path.join(base, "Assets")
+        return os.path.join(assets_base, subdirectory) if subdirectory else assets_base
     elif directory_type == "shared":
-        return os.path.join(base, "Shared")
+        shared_base = os.path.join(base, "Shared")
+        return os.path.join(shared_base, subdirectory) if subdirectory else shared_base
     else:
         raise ValueError(f"Unknown directory type: {directory_type}")
 
@@ -89,3 +91,34 @@ def directory_exists(project, directory_type: str) -> bool:
     if not dirname:
         return False
     return os.path.isdir(os.path.join(project.get_full_path(), dirname))
+
+
+def list_subdirectories(project, directory_type: str) -> list:
+    """Returns sorted subdirectory names inside Assets or Shared."""
+    dir_map = {"assets": "Assets", "shared": "Shared"}
+    dirname  = dir_map.get(directory_type)
+    if not dirname:
+        return []
+    base = os.path.join(project.get_full_path(), dirname)
+    if not os.path.exists(base):
+        return []
+    return sorted([
+        name for name in os.listdir(base)
+        if os.path.isdir(os.path.join(base, name)) and not name.startswith('.')
+    ])
+
+
+def validate_directory_name(name: str) -> str:
+    """Validate and return a filesystem-safe directory name."""
+    name = name.strip()
+    if not name:
+        raise ValueError("Folder name cannot be empty")
+    if any(c in name for c in '/\\:*?"<>|'):
+        raise ValueError("Folder name contains invalid characters")
+    if name.startswith('.'):
+        raise ValueError("Folder name cannot start with a dot")
+    safe = re.sub(r'[^\w\s\-]', '', name)
+    safe = re.sub(r'\s+', '_', safe.strip())
+    if not safe:
+        raise ValueError("Folder name has no valid characters")
+    return safe

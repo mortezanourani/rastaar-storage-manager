@@ -3,7 +3,7 @@ import {
   Row, Col, Card, Typography, Button, Tag, Empty,
   Spin, Modal, Form, Input, message, Badge,
 } from 'antd'
-import { FolderOutlined, PlusOutlined, RightOutlined } from '@ant-design/icons'
+import { FolderOutlined, PlusOutlined, RightOutlined, GlobalOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { getProjects, createProject } from '../api/projects'
 import { useAuth } from '../context/AuthContext'
@@ -75,6 +75,35 @@ export default function ProjectsPage() {
         )}
       </div>
 
+      <Card
+        hoverable
+        onClick={() => navigate('/global')}
+        style={{
+          borderRadius: 10,
+          border: '2px solid #d9f7be',
+          background: 'linear-gradient(135deg, #f6ffed 0%, #fff 100%)',
+          marginBottom: 24,
+        }}
+        styles={{ body: { padding: 20 } }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: 10,
+            background: '#d9f7be',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <GlobalOutlined style={{ fontSize: 24, color: '#52c41a' }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <Text strong style={{ fontSize: 15, display: 'block' }}>Global Storage</Text>
+            <Text type="secondary" style={{ fontSize: 13 }}>
+              Shared files accessible to all users — brand assets, templates, references
+            </Text>
+          </div>
+          <RightOutlined style={{ color: '#95de64' }} />
+        </div>
+      </Card>
       {/* Grid */}
       {projects.length === 0 ? (
         <Empty description="No projects yet. Create your first project to get started." />

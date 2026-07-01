@@ -14,6 +14,7 @@ const STEP_LABELS = ['Pick file', 'Name & mentions', 'Uploading']
 
 export default function UploadModal({
   projectId, directoryType, dateDirectory,
+  subdirectory = '',
   open, onClose, onSuccess,
 }) {
   const [step,        setStep]        = useState(0)
@@ -88,6 +89,7 @@ export default function UploadModal({
     form.append('directory_type', directoryType)
     if (dateDirectory) form.append('date_directory', dateDirectory)
     form.append('overwrite',      overwrite ? 'true' : 'false')
+    if (subdirectory) form.append('subdirectory', subdirectory)
     if (mentions.length) form.append('mention_user_ids', mentions.join(','))
 
     try {

@@ -108,11 +108,13 @@ function AudioViewer({ src, mimeType, filename }) {
 // ─── Main viewer ─────────────────────────────────────────────
 
 export default function FileViewerModal({
-  files = [],       // only viewable files in this directory
+  files = [],
   initialIndex = 0,
   projectId,
   open,
   onClose,
+  fetchFn,
+  downloadFn,
 }) {
   const [index,    setIndex]    = useState(initialIndex)
   const [blobUrl,  setBlobUrl]  = useState(null)
@@ -125,6 +127,9 @@ export default function FileViewerModal({
 
   const file = files[index]
 
+  const doFetch    = fetchFn    || ((id, onProg) => fetchFileBlob(projectId, id, onProg))
+  const doDownload = downloadFn || ((id, name)   => downloadFile(projectId, id, name))
+  
   // Sync index when modal opens with a new file
   useEffect(() => {
     if (open) setIndex(initialIndex)
@@ -166,7 +171,7 @@ export default function FileViewerModal({
     setProgress(0)
 
     try {
-      const res = await fetchFileBlob(projectId, file.id, setProgress)
+      const res = await doFetch(file.id, setProgress)
       const url = URL.createObjectURL(res.data)
       blobRef.current = url
       setBlobUrl(url)
@@ -188,7 +193,7 @@ export default function FileViewerModal({
 
   const handleDownload = async () => {
     try {
-      await downloadFile(projectId, file.id, file.display_name)
+      await doDownload(file.id, file.display_name)
     } catch {
       message.error('Download failed')
     }
