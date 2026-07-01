@@ -3,14 +3,13 @@ import client from './client'
 export const getStructure = (pid) =>
   client.get(`projects/${pid}/structure`)
 
-export const listFiles = (pid, directoryType, date = null, subdirectory = null) =>
-  client.get(`projects/${pid}/files`, {
-    params: {
-      directory_type: directoryType,
-      ...(date        && { date }),
-      ...(subdirectory !== null && { subdirectory }),
-    }
-  })
+// Replace listFiles:
+export const listFiles = (pid, directoryType, date = null, subdirectory = null) => {
+  const params = { directory_type: directoryType }
+  if (date !== null)         params.date         = date
+  if (subdirectory !== null) params.subdirectory = subdirectory
+  return client.get(`projects/${pid}/files`, { params })
+}
 
 export const checkConflict = (pid, data) =>
   client.post(`projects/${pid}/files/check-conflict`, data)

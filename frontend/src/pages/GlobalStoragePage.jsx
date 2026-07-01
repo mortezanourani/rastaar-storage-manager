@@ -165,7 +165,7 @@ export default function GlobalStoragePage() {
   const [uploadOpen,     setUploadOpen]     = useState(false)
   const [viewerState,    setViewerState]    = useState({ open: false, index: 0 })
 
-  const currentSubdir = selectedKey === 'root' ? '' : selectedKey.replace('sub|', '')
+  const currentSubdir = selectedKey === 'root' ? null : selectedKey.replace('sub|', '')
   const viewableFiles = files.filter(f => isViewable(f.mime_type))
 
   useEffect(() => { fetchStructure() }, [])

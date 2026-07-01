@@ -67,8 +67,8 @@ export default function FileBrowserPage() {
     if (key.startsWith('edit:'))   return { type: 'edit',   date: key.split(':')[1], subdirectory: null }
     if (key.startsWith('assets|')) return { type: 'assets', date: null, subdirectory: key.split('|')[1] }
     if (key.startsWith('shared|')) return { type: 'shared', date: null, subdirectory: key.split('|')[1] }
-    if (key === 'assets')          return { type: 'assets', date: null, subdirectory: '' }
-    if (key === 'shared')          return { type: 'shared', date: null, subdirectory: '' }
+    if (key === 'assets')          return { type: 'assets', date: null, subdirectory: null }
+    if (key === 'shared')          return { type: 'shared', date: null, subdirectory: null }
     return null
   }
 
@@ -251,7 +251,7 @@ export default function FileBrowserPage() {
               projectId={projectId}
               directoryType={selection.type}
               dateDirectory={selection.date}
-              subdirectory={selection.subdirectory || ''}
+              subdirectory={selection.subdirectory}
             />
           )}
         </div>

@@ -65,18 +65,23 @@ def list_files(
     project_id: int,
     directory_type: str,
     date: Optional[str] = None,
-    subdirectory: Optional[str] = None,   # ← new
+    subdirectory: Optional[str] = None,   # None = all, '' = root only, 'name' = specific
 ):
     project = get_accessible_project(request.auth, project_id)
     check_directory_access(request.auth, project_id, directory_type)
+
     files = FileRecord.objects.filter(
         project=project,
         directory_type=directory_type,
         is_deleted=False,
     ).select_related("uploaded_by")
+
     if date:
         files = files.filter(date_directory=date_cls.fromisoformat(date))
-    files = files.filter(subdirectory=subdirectory or '')   # ← new
+
+    if subdirectory is not None:
+        files = files.filter(subdirectory=subdirectory)
+
     return [serialize_file(f) for f in files.order_by("-uploaded_at")]
 
 

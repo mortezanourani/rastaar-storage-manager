@@ -29,13 +29,16 @@ def get_global_structure(request):
 
 
 @router.get("/global/files", response=List[GlobalFileOut])
-def list_global_files(request, subdirectory: str = ''):
+@router.get("/global/files", response=List[GlobalFileOut])
+def list_global_files(request, subdirectory: Optional[str] = None):
     files = GlobalFileRecord.objects.filter(
-        subdirectory=subdirectory,
         is_deleted=False,
-    ).select_related("uploaded_by").order_by("-uploaded_at")
-    return [serialize_global_file(f) for f in files]
+    ).select_related("uploaded_by")
 
+    if subdirectory is not None:
+        files = files.filter(subdirectory=subdirectory)
+
+    return [serialize_global_file(f) for f in files.order_by("-uploaded_at")]
 
 @router.post("/global/files/check-conflict", response=dict)
 def check_global_file_conflict(request, data: GlobalConflictCheckInput):

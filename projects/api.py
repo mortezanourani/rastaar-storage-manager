@@ -24,10 +24,14 @@ User = get_user_model()
 
 
 @router.get("/projects", response=list[ProjectOut])
-def list_projects(request):
+def list_projects(request, include_inactive: bool = False):
     user = request.auth
+
     if user.is_global_manager:
-        return Project.objects.filter(is_active=True).order_by("name")
+        qs = Project.objects.all() if (include_inactive and user.is_administrator) \
+             else Project.objects.filter(is_active=True)
+        return qs.order_by("name")
+
     project_ids = ProjectMembership.objects.filter(
         user=user
     ).values_list("project_id", flat=True)

@@ -1,11 +1,17 @@
 import client from './client'
 
 export const getGlobalStructure  = ()                  => client.get('global/structure')
-export const listGlobalFiles     = (subdirectory = '')  =>
-  client.get('global/files', { params: { subdirectory } })
+
+export const listGlobalFiles = (subdirectory = null) => {
+  const params = {}
+  if (subdirectory !== null) params.subdirectory = subdirectory
+  return client.get('global/files', { params })
+}
 
 export const checkGlobalConflict = (data)              => client.post('global/files/check-conflict', data)
+
 export const deleteGlobalFile    = (fileId)            => client.delete(`global/files/${fileId}`)
+
 export const createGlobalDirectory = (name)            => client.post('global/directories', { name })
 
 export const uploadGlobalFile = (formData, onProgress) =>

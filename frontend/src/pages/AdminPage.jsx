@@ -5,7 +5,7 @@ import {
 } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import { getUsers, createUser, deactivate } from '../api/auth'
+import { getUsers, createUser, updateUser, deactivate } from '../api/auth'  // ← add updateUser
 import { getProjects, updateProject } from '../api/projects'
 import { useAuth } from '../context/AuthContext'
 
@@ -23,6 +23,7 @@ function UsersTab() {
   useEffect(() => { fetchUsers() }, [])
 
   const fetchUsers = async () => {
+    setLoading(true)
     try {
       const res = await getUsers()
       setUsers(res.data)
@@ -53,6 +54,17 @@ function UsersTab() {
     }
   }
 
+  // ← NEW
+  const handleActivate = async (userId) => {
+    try {
+      await updateUser(userId, { is_active: true })
+      message.success('User activated')
+      fetchUsers()
+    } catch {
+      message.error('Failed to activate user')
+    }
+  }
+
   const columns = [
     {
       title: 'User',
@@ -63,6 +75,11 @@ function UsersTab() {
           <Text type="secondary" style={{ fontSize: 12 }}>{u.email}</Text>
         </div>
       ),
+    },
+    {
+      title: 'Username',
+      dataIndex: 'username',
+      render: (v) => <Text code style={{ fontSize: 12 }}>{v}</Text>,
     },
     {
       title: 'Global Role',
@@ -84,6 +101,7 @@ function UsersTab() {
       title: '',
       key: 'action',
       render: (_, u) => u.is_active ? (
+        // Deactivate active users
         <Popconfirm
           title="Deactivate this user?"
           description="They will lose all access immediately"
@@ -94,7 +112,18 @@ function UsersTab() {
           <Button type="text" danger size="small">Deactivate</Button>
         </Popconfirm>
       ) : (
-        <Text type="secondary" style={{ fontSize: 12 }}>Inactive</Text>
+        // ← NEW: Activate inactive users
+        <Popconfirm
+          title="Activate this user?"
+          description="They will regain full access"
+          onConfirm={() => handleActivate(u.id)}
+          okText="Activate"
+          okButtonProps={{ style: { background: '#52c41a', borderColor: '#52c41a' } }}
+        >
+          <Button type="text" size="small" style={{ color: '#52c41a' }}>
+            Activate
+          </Button>
+        </Popconfirm>
       ),
     },
   ]
@@ -106,11 +135,11 @@ function UsersTab() {
           Create User
         </Button>
       </div>
-
       <Table
         rowKey="id" columns={columns}
         dataSource={users} loading={loading}
         pagination={{ pageSize: 15 }}
+        rowClassName={(u) => !u.is_active ? 'ant-table-row-disabled' : ''}
       />
 
       <Modal
@@ -161,14 +190,19 @@ function ProjectsTab() {
   useEffect(() => { fetchProjects() }, [])
 
   const fetchProjects = async () => {
-    try { const res = await getProjects(); setProjects(res.data) }
-    catch {} finally { setLoading(false) }
+    setLoading(true)
+    try {
+      // ← include_inactive=true so all projects appear
+      const res = await getProjects(true)
+      setProjects(res.data)
+    } catch { message.error('Failed to load projects') }
+    finally  { setLoading(false) }
   }
 
   const handleToggle = async (project) => {
     try {
       await updateProject(project.id, { is_active: !project.is_active })
-      message.success(`Project ${project.is_active ? 'deactivated' : 'activated'}`)
+      message.success(`Project "${project.name}" ${project.is_active ? 'deactivated' : 'activated'}`)
       fetchProjects()
     } catch { message.error('Failed to update project') }
   }
@@ -181,8 +215,11 @@ function ProjectsTab() {
         <div>
           <Text
             strong
-            style={{ display: 'block', color: '#1677ff', cursor: 'pointer' }}
-            onClick={() => navigate(`/projects/${p.id}`)}
+            style={{
+              display: 'block', cursor: p.is_active ? 'pointer' : 'default',
+              color: p.is_active ? '#1677ff' : '#bbb',
+            }}
+            onClick={() => p.is_active && navigate(`/projects/${p.id}`)}
           >
             {p.name}
           </Text>
@@ -195,7 +232,7 @@ function ProjectsTab() {
     {
       title: 'Storage Path',
       dataIndex: 'storage_path',
-      render: (p) => <Text code style={{ fontSize: 12 }}>{p}</Text>,
+      render: (v) => <Text code style={{ fontSize: 12 }}>{v}</Text>,
     },
     {
       title: 'Status',
@@ -205,15 +242,28 @@ function ProjectsTab() {
     {
       title: '',
       key: 'action',
-      render: (_, p) => (
+      render: (_, p) => p.is_active ? (
+        // Deactivate active project
         <Popconfirm
-          title={`${p.is_active ? 'Deactivate' : 'Activate'} this project?`}
+          title="Deactivate this project?"
+          description="Members will lose access until reactivated"
           onConfirm={() => handleToggle(p)}
-          okText={p.is_active ? 'Deactivate' : 'Activate'}
-          okButtonProps={p.is_active ? { danger: true } : {}}
+          okButtonProps={{ danger: true }}
+          okText="Deactivate"
         >
-          <Button type="text" danger={p.is_active} size="small">
-            {p.is_active ? 'Deactivate' : 'Activate'}
+          <Button type="text" danger size="small">Deactivate</Button>
+        </Popconfirm>
+      ) : (
+        // ← NEW: Activate inactive project
+        <Popconfirm
+          title="Activate this project?"
+          description="Members will regain access"
+          onConfirm={() => handleToggle(p)}
+          okText="Activate"
+          okButtonProps={{ style: { background: '#52c41a', borderColor: '#52c41a' } }}
+        >
+          <Button type="text" size="small" style={{ color: '#52c41a' }}>
+            Activate
           </Button>
         </Popconfirm>
       ),
@@ -225,6 +275,7 @@ function ProjectsTab() {
       rowKey="id" columns={columns}
       dataSource={projects} loading={loading}
       pagination={{ pageSize: 15 }}
+      rowClassName={(p) => !p.is_active ? 'ant-table-row-disabled' : ''}
     />
   )
 }

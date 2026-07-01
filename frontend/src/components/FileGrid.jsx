@@ -171,7 +171,7 @@ function FileCard({ file, projectId, canDelete, onDeleted, onView }) {
 
 // ─── FileGrid ────────────────────────────────────────────────
 
-export default function FileGrid({ projectId, directoryType, dateDirectory, subdirectory = '' }) {
+export default function FileGrid({ projectId, directoryType, dateDirectory, subdirectory = null }) {
   const { user } = useAuth()
   const [files,       setFiles]       = useState([])
   const [loading,     setLoading]     = useState(true)

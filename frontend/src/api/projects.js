@@ -1,6 +1,9 @@
 import client from './client'
 
-export const getProjects   = ()            => client.get('projects')
+export const getProjects = (includeInactive = false) =>
+  client.get('projects', {
+    params: includeInactive ? { include_inactive: true } : {}
+  })
 export const getProject    = (id)          => client.get(`projects/${id}`)
 export const createProject = (data)        => client.post('projects', data)
 export const updateProject = (id, data)    => client.patch(`projects/${id}`, data)
